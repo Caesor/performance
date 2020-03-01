@@ -4,7 +4,7 @@ import Test from './js/main'
 
 const info = wx.getSystemInfoSync();
 const test = new Test({
-    num: 500,
+    num: 150,
     canvas,
     width: info.screenWidth,
     height: info.screenHeight,
@@ -15,4 +15,4 @@ test.start();
 
 setTimeout(()=> {
     test.stop();
-}, 3000)
+}, 1000)

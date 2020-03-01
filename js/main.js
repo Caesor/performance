@@ -1,6 +1,6 @@
 import Polygon from './collision/sat/Polygon'
 import Point from './collision/sat/Point'
-import CollisionManager from './collision/index.js';
+import CollisionManager from './collision/manager';
 
 const POLYGONS = [
     [new Point(0, 0), new Point(0, 50), new Point(50, 50)],
@@ -24,10 +24,15 @@ export default class Test {
 
         this.visible = visible;
 
+        // step 1\2: normal
         this.collisionManager = new CollisionManager(width, height);
+        // step 3: using worker
+        // this.worker = wx.createWorker('collision/index.js');
         
         this.timer = null;
         this.elapsed = [];
+
+        this.frame = 0;
 
         this.init();
         this.loop = this.loop.bind(this);
@@ -67,11 +72,10 @@ export default class Test {
         cancelAnimationFrame(this.timer);
         // console.log(this.elapsed);
         const abandon = this.elapsed.filter( t => t > 16).length;
-
-        const average = this.elapsed.reduce( (a, b) => a + b) / this.elapsed.length;
         // console.log(this.elapsed.length, abandon);
         const a = (abandon / this.elapsed.length * 100).toFixed(2) + '%'
-        console.log(a, this.counter, average);
+        const average = this.elapsed.reduce( (a, b) => a + b) / this.elapsed.length;
+        console.log(a, this.counter, parseInt(average) + 'ms');
         // this.shapes.map(s => {
         //     console.log(s.id, s.collisionList);
         // })
@@ -92,6 +96,7 @@ export default class Test {
         this.shapes.forEach(shape => {
             const { vx, vy } = shape;
             shape.move(vx, vy, this.width, this.height);
+            // step 1/2:normal
             const rect = shape.getBounds();
             rect.id = shape.id;
             rect.source = shape;
@@ -104,13 +109,41 @@ export default class Test {
             this.context.fillRect(0,0,this.width, this.height);
             this.drawShapes();
         }
-        
-        let start = Date.now();
+
+        // this.worker.postMessage({
+        //     frame: this.frame,
+        //     time: Date.now(),
+        //     width: this.width,
+        //     height: this.height,
+        //     shapes: this.shapes,
+        // });
+        // this.frame++;
+
+        // this.worker.onMessage(obj => {
+        //     const { frame, time, counter, result } = obj;
+        //     this.counter = counter;
+        //     // console.log(frame, counter, result);
+        //     for(let i =0 ; i < result.length; i++) {
+        //         if(result[i].length > 0) {
+        //             this.shapes[i].changeColor();
+        //             for(let j = 0; j < result[i].length; j++) {
+        //                 const k = result[i][j]
+        //                 this.shapes[k].changeColor();
+        //             }
+        //         }
+        //     }
+        //     let diff = Date.now() - time;
+        //     // console.log(diff);
+        //     this.elapsed.push(diff);
+        // });
+
+        const time = Date.now();
         // this.counter = this.collisionManager.detectCollisions();
         this.counter = this.collisionManager.detectCollisionsByQuadTree(this.shapes);
-        let diff = Date.now() - start;
+        
+        let diff = Date.now() - time;
         // console.log(diff);
-        this.elapsed.push(diff);
+        this.elapsed.push(diff)
 
         this.timer = requestAnimationFrame(this.loop);
     }
